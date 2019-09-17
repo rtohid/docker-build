@@ -17,7 +17,5 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/${LD_LIBRARY_PATH:+:
 ENV PYTHONPATH=$PYTHONPATH:/usr/local/lib/python2.7/site-packages${PYTHONPATH:+:}${PYTHONPATH}
 ENV OPENMPI=true
 
-# RUN spack install flecsi
-
 WORKDIR /home/stellar
 
