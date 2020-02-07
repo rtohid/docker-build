@@ -46,8 +46,6 @@ RUN git fetch
 RUN git checkout -b hpx_backend_rebooted origin/hpx_backend_rebooted
 RUN git submodule update --recursive
 
-# RUN cp /home/stellar/src/flecsi/spack-repo/packages/flecsi/package.py /home/stellar/src/spack/var/spack/repos/builtin/packages/flecsi/package.py
-
 
 RUN . /home/stellar/src/spack/share/spack/setup-env.sh && \
     spack env create flecsi-deps && \
