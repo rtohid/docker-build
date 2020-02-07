@@ -1,6 +1,4 @@
-all: 
-
-	@echo "Please choose run or build."
+all: prune interactive
 
 IMAGE_NAME?=stellar-img
 IMAGE_TAG?=flecsi

@@ -40,6 +40,13 @@ COPY ./packages.yaml /home/stellar/src/spack/etc/spack/defaults/linux/
 COPY ./package.py /home/stellar/src/spack/var/spack/repos/builtin/packages/flecsi/package.py
 
 RUN git clone --recursive https://github.com/stellar-group/flecsi.git
+RUN git clone --recursive https://github.com/laristra/flecsale.git
+
+WORKDIR /home/stellar/src/flecsale/flecsi
+RUN git remote add stellar https://github.com/stellar-group/flecsi.git
+RUN git fetch stellar
+RUN git checkout -b hpx_backend_rebooted stellar/hpx_backend_rebooted
+RUN git submodule update --recursive
 
 WORKDIR /home/stellar/src/flecsi
 RUN git fetch
@@ -51,7 +58,8 @@ RUN . /home/stellar/src/spack/share/spack/setup-env.sh && \
     spack env create flecsi-deps && \
     spack env activate flecsi-deps && \
     spack install --only dependencies flecsi backend=hpx +debug_backend %gcc@9.2.1 ^mpich@3.2.1 ^boost@1.70.0 && \
-    spack install exodusii %gcc@9.2.1 ^mpich@3.2.1
+    spack install exodusii %gcc@9.2.1 ^mpich@3.2.1 && \
+    spack install lua
 
 WORKDIR /home/stellar/src/flecsi/build
 
