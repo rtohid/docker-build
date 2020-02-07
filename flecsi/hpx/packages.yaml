@@ -1,0 +1,13 @@
+packages:
+  perl:
+    paths:
+      perl@5.28.2: /usr
+  python:
+    paths:
+      python@2.7.17: /usr
+  cmake:
+    paths:
+      cmake@3.14.5: /usr
+  tar:
+    paths:
+      tar@1.32: /usr
