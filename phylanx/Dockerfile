@@ -1,6 +1,6 @@
 FROM fedora
 RUN dnf install -y gcc-c++ gcc make cmake git \
-    bzip2 hwloc-devel blas blas-devel lapack lapack-devel boost-devel \
+    bzip2 bzip2-devel xz xz-devel hwloc-devel blas blas-devel lapack lapack-devel boost-devel \
     libatomic which compat-openssl10 vim-enhanced wget zlib-devel \
     python3-flake8 gdb sudo python36 openmpi-devel sqlite-devel sqlite \
     findutils openssl-devel lm_sensors-devel
@@ -23,6 +23,7 @@ RUN ln -s /Python-${PYVER}/Include /usr/include/python${PYVER}
 
 RUN pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org numpy tensorflow keras CNTK pytest
 RUN pip3 install numpy tensorflow keras CNTK pytest
+RUN pip3 install pandas
 WORKDIR /
 
 RUN git clone https://github.com/STEllAR-GROUP/hpx.git && \
@@ -67,11 +68,24 @@ RUN git clone https://github.com/STEllAR-GROUP/blaze_tensor.git && \
     rm -f $(find . -name \*.o)
 
 COPY build.sh /usr/local/bin/build.sh
+COPY als.py /home/jovyan/als.py
+COPY als_phylanx.py /home/jovyan/als_phylanx.py
+
+COPY run_als.sh /home/jovyan/run_als.sh
+RUN chmod +x /home/jovyan/run_als.sh
+
+COPY lra.py /home/jovyan/lra.py
+
+COPY MovieLens_20m.csv /home/jovyan/MovieLens_20m.csv
+COPY 10kx10k.csv /home/jovyan/10kx10k.csv
+
 RUN chmod +x /usr/local/bin/build.sh
 
+RUN build.sh install
 RUN echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
 COPY Dockerfile /Dockerfile
 RUN useradd -m jovyan
+RUN chown -R jovyan:jovyan /home/
 USER jovyan
 WORKDIR /home/jovyan
 ENV LD_LIBRARY_PATH /home/jovyan/install/phylanx/lib64:/usr/local/lib64:/home/jovyan/install/phylanx/lib/phylanx:/usr/lib64/openmpi/lib
