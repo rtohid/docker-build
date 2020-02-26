@@ -1,91 +1,106 @@
+# Copyright (c) 2020 R. Tohid
+#
+# Distributed under the Boost Software License, Version 1.0. (See a copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
 FROM fedora
-RUN dnf install -y gcc-c++ gcc make cmake git \
-    bzip2 bzip2-devel xz xz-devel hwloc-devel blas blas-devel lapack lapack-devel boost-devel \
-    libatomic which compat-openssl10 vim-enhanced wget zlib-devel \
-    python3-flake8 gdb sudo python36 openmpi-devel sqlite-devel sqlite \
-    findutils openssl-devel lm_sensors-devel
 
-ARG CPUS
-ARG BUILD_TYPE=Release
+ARG BUILD_TYPE=Debug
+ARG PYTHON_VERSION=3.8
+ARG CPUS=48
+ARG MALLOC=system
+ARG PREFIX=/home/stellar/bin
+# ARG HPX_VERSION
 
-RUN ln -s /usr/lib64/openmpi/lib/libmpi_cxx.so /usr/lib64/openmpi/lib/libmpi_cxx.so.1
-RUN ln -s /usr/lib64/openmpi/lib/libmpi.so /usr/lib64/openmpi/lib/libmpi.so.12
-ENV PYVER 3.6.8
-RUN wget https://www.python.org/ftp/python/${PYVER}/Python-${PYVER}.tgz
-RUN tar xf Python-${PYVER}.tgz
-WORKDIR /Python-${PYVER}
+RUN dnf -y update
+
+RUN dnf install -y sudo
+
+RUN dnf install -y xz xz-devel bzip2 bzip2-devel zlib-devel tar
+RUN dnf install -y git
+RUN dnf install -y blas blas-devel lapack lapack-devel
+RUN dnf install -y boost-devel
+RUN dnf install -y libatomic which compat-openssl10 vim-enhanced 
+
+
+RUN dnf install -y findutils
+RUN dnf install -y bash-completion
+RUN dnf install -y wget curl
+RUN dnf install -y environment-modules 
+
+RUN dnf install -y hwloc hwloc-devel
+RUN dnf install -y compat-openssl10 compat-openssl10-devel
+RUN dnf install -y make cmake automake autoconf libtool ccache
+
+RUN dnf install -y gcc-c++ gcc-gfortran  redhat-rpm-config clang
+RUN dnf install -y llvm llvm-devel compiler-rt clang-devel
+RUN dnf install -y sqlite sqlite-devel
+
+RUN dnf install -y gdb 
+RUN dnf install -y openmpi openmpi-devel
+RUN dnf install -y flex patch graphviz pandoc cereal-devel lapack-devel
+
+
+RUN git clone -b ${PYTHON_VERSION} https://github.com/python/cpython.git python-${PYTHON_VERSION}
+WORKDIR /python-${PYTHON_VERSION}
 RUN ./configure
 RUN make -j ${CPUS} install
 
-# Make headers available
-RUN cp /Python-${PYVER}/pyconfig.h /Python-${PYVER}/Include
-RUN ln -s /Python-${PYVER}/Include /usr/include/python${PYVER}
+RUN python3 -m pip install -U pip
+RUN python3 -m pip install pytest
+RUN groupadd -r stellar
+RUN useradd -r -m -g stellar -G wheel stellar
+RUN echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org numpy tensorflow keras CNTK pytest
-RUN pip3 install numpy tensorflow keras CNTK pytest
-RUN pip3 install pandas
-WORKDIR /
 
-RUN git clone https://github.com/STEllAR-GROUP/hpx.git && \
-    cd /hpx && \
-    git checkout -b pearc 21b676197ac8fdcbb63b1b4069cf6983a046fd02 && \
-    mkdir -p /hpx/build && \
-    cd /hpx/build && \
-    cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-      -DHPX_WITH_MALLOC=system \
-      -DHPX_WITH_MORE_THAN_64_THREADS=ON \
-      -DHPX_WITH_MAX_CPU_COUNT=80 \
-      -DHPX_WITH_EXAMPLES=Off \
-      .. && \
-    make -j ${CPUS} install && \
-    rm -f $(find . -name \*.o)
+WORKDIR /home/stellar/bin
+WORKDIR /home/stellar/repos
 
-RUN git clone https://github.com/pybind/pybind11.git && \
-    cd /pybind11 && \
-    git checkout -b pearc 4f72ef846fe8453596230ac285eeaa0ce3278bb4 && \
-    mkdir -p /pybind11/build && \
-    cd /pybind11/build && \
-    cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DPYBIND11_PYTHON_VERSION=${PYVER} .. && \
-    make -j ${CPUS} install && \
-    rm -f $(find . -name \*.o)
+RUN git clone https://github.com/STEllAR-GROUP/hpx.git
+WORKDIR /home/stellar/repos/hpx/build
+RUN cmake \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE}     \
+        -DHPX_WITH_MALLOC=${MALLOC}          \
+        -DHPX_WITH_MORE_THAN_64_THREADS=ON   \
+        -DHPX_WITH_MAX_CPU_COUNT=80          \
+        -DHPX_WITH_EXAMPLES=Off              \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX}/hpx \
+        ..
 
-RUN git clone https://bitbucket.org/blaze-lib/blaze.git && \
-    cd /blaze && \
-    git checkout -b pearc 48f55121eecd32cfea25d3027be834f74a513e88 && \
-    mkdir -p /blaze/build && \
-    cd /blaze/build && \
-    cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} .. && \
-    make -j ${CPUS} install && \
-    rm -f $(find . -name \*.o)
+RUN make -j ${CPUS} install
 
-RUN git clone https://github.com/STEllAR-GROUP/blaze_tensor.git && \
-    cd /blaze_tensor && \
-    git checkout -b pearc f202f40067992f7370275118911a0cd2f65d6053 && \
-    mkdir -p /blaze_tensor/build && \
-    cd /blaze_tensor/build && \
-    cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} .. && \
-    make -j ${CPUS} install && \
-    rm -f $(find . -name \*.o)
+WORKDIR /home/stellar/repos
+RUN git clone https://github.com/pybind/pybind11.git
+WORKDIR /home/stellar/repos/pybind11/build
 
+RUN cmake \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        ..
+RUN make -j ${CPUS} install
+
+WORKDIR /home/stellar/repos
+RUN git clone https://bitbucket.org/blaze-lib/blaze.git
+WORKDIR /home/stellar/repos/blaze/build
+RUN cmake \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        ..
+RUN make -j ${CPUS} install
+
+WORKDIR /home/stellar/repos
+RUN git clone https://github.com/STEllAR-GROUP/blaze_tensor.git
+WORKDIR /home/stellar/repos/blaze_tensor/build
+RUN cmake \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        ..
+RUN make -j ${CPUS} install
+
+WORKDIR /home/stellar/repos
+RUN git clone https://github.com/STEllAR-GROUP/phylanx.git
+WORKDIR /home/stellar/repos/phylanx/build
 COPY build.sh /usr/local/bin/build.sh
-COPY als.py /home/jovyan/als.py
-COPY als_phylanx.py /home/jovyan/als_phylanx.py
-
-COPY run_als.sh /home/jovyan/run_als.sh
-RUN chmod +x /home/jovyan/run_als.sh
-
-COPY lra.py /home/jovyan/lra.py
-
-COPY MovieLens_20m.csv /home/jovyan/MovieLens_20m.csv
-COPY 10kx10k.csv /home/jovyan/10kx10k.csv
-
 RUN chmod +x /usr/local/bin/build.sh
 
-RUN build.sh install
-RUN echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
 COPY Dockerfile /Dockerfile
-RUN useradd -m jovyan
-RUN chown -R jovyan:jovyan /home/
-USER jovyan
-WORKDIR /home/jovyan
-ENV LD_LIBRARY_PATH /home/jovyan/install/phylanx/lib64:/usr/local/lib64:/home/jovyan/install/phylanx/lib/phylanx:/usr/lib64/openmpi/lib
+
+RUN chown -R stellar:stellar /home/stellar
+USER stellar
