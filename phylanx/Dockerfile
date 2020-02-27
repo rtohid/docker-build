@@ -5,6 +5,16 @@
 
 FROM fedora
 
+
+ARG BUILD_PATH=/usr/local/build
+ARG BUILD_TYPE=Debug
+ARG PYTHON_VERSION=3.8
+ARG CPUS=48
+ARG MALLOC=system
+ARG PREFIX=/home/stellar/bin
+ARG REPO_PATH=/home/stellar/repos
+ARG USER=stellar
+
 RUN dnf -y update
 
 RUN dnf install -y sudo
@@ -32,15 +42,6 @@ RUN dnf install -y sqlite sqlite-devel
 RUN dnf install -y gdb
 RUN dnf install -y openmpi openmpi-devel
 RUN dnf install -y flex patch graphviz pandoc cereal-devel lapack-devel
-
-ARG BUILD_PATH=/usr/local/build
-ARG BUILD_TYPE=Debug
-ARG PYTHON_VERSION=3.8
-ARG CPUS=48
-ARG MALLOC=system
-ARG PREFIX=/home/stellar/bin
-ARG REPO_PATH=/home/stellar/repos
-ARG USER=stellar
 
 # install Python ${PYTHON_VERSION}
 RUN git clone -b ${PYTHON_VERSION} https://github.com/python/cpython.git python-${PYTHON_VERSION}
@@ -113,4 +114,3 @@ RUN chmod +x /usr/local/bin/build_phylanx.sh
 
 
 RUN chown -R stellar:stellar /home/stellar
-USER stellar
