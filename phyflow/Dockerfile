@@ -25,6 +25,7 @@ RUN dnf install -y make cmake
 RUN dnf install -y llvm llvm-devel clang clang-devel
 
 RUN dnf install -y flex patch graphviz
+RUN dnf install -y libffi-devel
 
 ARG BUILD_PATH=/usr/local/build
 ARG BUILD_TYPE=Debug
@@ -41,7 +42,8 @@ RUN ./configure
 RUN make -j ${NPROCS} install
 
 RUN python3 -m pip install -U pip
-RUN python3 -m pip install pytest
+RUN python3 -m pip install pytest pytest-regressions
+RUN python3 -m pip install ipython
 
 # add user
 RUN groupadd -r ${USER}
@@ -64,8 +66,9 @@ RUN make -j ${NPROCS} install
 COPY Dockerfile /Dockerfile
 
 # add build script, with a default Debug build.
-RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
 
 RUN sudo chown -R stellar:stellar /home/stellar
 
-USER stellar
+USER ${USER}
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+RUN sed -i 's/font/mairan/g' /home/${USER}/.bashrc
