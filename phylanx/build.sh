@@ -1,14 +1,14 @@
 #!/bin/bash
 
 PROCS=$(nproc)
-PREFIX=$HOME/bin
+PREFIX=/usr/local/build
 BUILD_TYPE=Debug
 MALLOC=system
 
-mkdir ~/repos/phylanx/build
+mkdir -p ~/repos/phylanx/build
 cd ~/repos/phylanx/build
 cmake \
-    -Dblaze_DIR=$PREFIX=/blaze/share/blaze/cmake/          			\
+    -Dblaze_DIR=$PREFIX/blaze/share/blaze/cmake/          			\
     -DBlazeTensor_DIR=${PREFIX}/blaze_tensor/share/blaze/cmake/ \
     -DPHYLANX_WITH_BLAZE_TENSOR=ON                              \
     -Dpybind11_DIR=$PREFIX/pybind11/share/cmake/pybind11/ 			\

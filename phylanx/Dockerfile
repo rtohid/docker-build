@@ -114,3 +114,5 @@ RUN chmod +x /usr/local/bin/build_phylanx.sh
 
 
 RUN chown -R stellar:stellar /home/stellar
+
+USER ${USER}
