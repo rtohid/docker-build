@@ -40,18 +40,20 @@ WORKDIR /home/stellar/src/pybind11/build
 RUN cmake ..
 RUN make -j
 RUN make install
-RUN python3.8 -m pip install pybind11
+RUN python3.8 -m pip install pybind11 numpy astpretty pylint
 
 WORKDIR /home/stellar/src
-RUN git clone -b tiramisu --single-branch https://github.com/rtohid/phyflow.git
+RUN git clone -b demo_temp --single-branch https://github.com/rtohid/phyflow.git
 
-WORKDIR /home/stellar/src/phyflow/backend
+WORKDIR /home/stellar/src/phyflow/phyfleaux/backend
 RUN ln -s /home/stellar/src/tiramisu/build/libtiramisu.so .
 RUN make -j
 
 RUN chown -R stellar:stellar /home/stellar
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH/home/stellar/src/phyflow/backend" >> /home/stellar/.bashrc
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH/home/stellar/src/phyflow/phyfleaux/backend" >> /home/stellar/.bashrc
+RUN echo "export PYTHONPATH=$PYTHONPATH:/home/stellar/src/phyflow/" >> /home/stellar/.bashrc
 
 WORKDIR /home/stellar
 USER stellar
-WORKDIR /home/stellar/src/phyflow/backend
+
+WORKDIR /home/stellar/src/phyflow/
