@@ -21,7 +21,7 @@ RUN apt install -y libisl-dev
 RUN apt install -y python3.8-distutils
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.8 get-pip.py
-RUN python3.8 -m pip install pytest
+RUN python3.8 -m pip install pytest numpy astpretty
 RUN adduser --disabled-password --gecos '' stellar
 RUN adduser stellar sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
