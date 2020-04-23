@@ -55,3 +55,5 @@ RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH/home/stellar/src/phyflow/back
 WORKDIR /home/stellar
 USER stellar
 WORKDIR /home/stellar/src/phyflow/backend
+
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
