@@ -43,17 +43,19 @@ RUN make install
 RUN python3.8 -m pip install pybind11
 
 WORKDIR /home/stellar/src
-RUN git clone -b tiramisu --single-branch https://github.com/rtohid/phyflow.git
+RUN git clone -b demo-merge --single-branch https://github.com/rtohid/phyflow.git
 
-WORKDIR /home/stellar/src/phyflow/backend
+WORKDIR /home/stellar/src/phyflow/phyfleaux/backend
 RUN ln -s /home/stellar/src/tiramisu/build/libtiramisu.so .
 RUN make -j
 
+# RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/src/phyflow/phyfleaux/backend" >> /home/stellar/.bashrc
+RUN echo "export PYTHONPATH=:/home/stellar/src/phyflow/" >> /home/stellar/.bashrc
+
 RUN chown -R stellar:stellar /home/stellar
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH/home/stellar/src/phyflow/backend" >> /home/stellar/.bashrc
 
 WORKDIR /home/stellar
 USER stellar
 WORKDIR /home/stellar/src/phyflow/backend
 
-RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
