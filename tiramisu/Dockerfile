@@ -9,53 +9,83 @@ RUN apt update
 RUN apt install -y sudo
 
 
-RUN apt install -y clang-8 python3.8 python3.8-dev
+RUN apt install -y python3.8 python3.8-dev python3.8-distutils
 RUN apt install -y build-essential
 RUN apt install -y cmake automake autoconf libtool
+RUN apt install -y libpng-dev libjpeg-dev
 RUN apt install -y zlib1g-dev libz-dev
 RUN apt install -y git vim
 RUN apt install -y wget curl
 RUN apt install -y bash-completion
+
 RUN apt install -y libisl-dev
 
-RUN apt install -y python3.8-distutils
+# MPI
+RUN apt install -y openmpi-bin openmpi-common libopenmpi-dev # libopenmpi-dbg
+RUN apt install -y openssh-client openssh-server
+
+RUN apt install -y llvm-8 llvm-8-dev clang-8
+
+# CUDA
+WORKDIR /tmp/
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+RUN mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+RUN wget http://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda-repo-ubuntu1804-10-2-local-10.2.89-440.33.01_1.0-1_amd64.deb
+RUN dpkg -i cuda-repo-ubuntu1804-10-2-local-10.2.89-440.33.01_1.0-1_amd64.deb
+RUN apt-key add /var/cuda-repo-10-2-local-10.2.89-440.33.01/7fa2af80.pub
+RUN apt update
+RUN DEBIAN_FRONTEND=noninteractive apt -y install cuda
+
+WORKDIR /home/stellar/git
+RUN git clone --recursive https://github.com/Tiramisu-Compiler/tiramisu.git
+
+# ISL
+WORKDIR /home/stellar/git/tiramisu/3rdParty/isl/build
+WORKDIR /home/stellar/git/tiramisu/3rdParty/isl/
+
+RUN ./configure --prefix=$PWD/build/ --with-int=imath
+RUN make -j
+RUN make install
+
+
+WORKDIR /tmp/
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.8 get-pip.py
 RUN python3.8 -m pip install pytest numpy astpretty
+
 RUN adduser --disabled-password --gecos '' stellar
 RUN adduser stellar sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-WORKDIR /home/stellar/src
-RUN git clone -b physl_2019 --single-branch https://github.com/rtohid/tiramisu.git
-
-WORKDIR /home/stellar/src/tiramisu/build
+WORKDIR /home/stellar/git/tiramisu/build
 RUN cmake ..
 RUN make -j tiramisu
 
-WORKDIR /home/stellar/src/
+WORKDIR /home/stellar/git/
 RUN git clone --single-branch https://github.com/pybind/pybind11.git
 
-WORKDIR /home/stellar/src/pybind11/build
+WORKDIR /home/stellar/git/pybind11/build
 RUN cmake ..
 RUN make -j
 RUN make install
 RUN python3.8 -m pip install pybind11
 
-WORKDIR /home/stellar/src
-RUN git clone -b demo-merge --single-branch https://github.com/rtohid/phyflow.git
+WORKDIR /home/stellar/git
+RUN git clone -b demo-merge --single-branch https://github.com/stellar-group/phyfleaux.git
 
-WORKDIR /home/stellar/src/phyflow/phyfleaux/backend
-RUN ln -s /home/stellar/src/tiramisu/build/libtiramisu.so .
+WORKDIR /home/stellar/git/phyfleaux/phyfleaux/backend
+RUN ln -s /home/stellar/git/tiramisu/build/libtiramisu.so .
 RUN make -j
 
-# RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/src/phyflow/phyfleaux/backend" >> /home/stellar/.bashrc
-RUN echo "export PYTHONPATH=:/home/stellar/src/phyflow/" >> /home/stellar/.bashrc
+WORKDIR /tmp/
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/git/phyfleaux/phyfleaux/backend" >> /home/stellar/.bashrc
+RUN echo "export PYTHONPATH=:/home/stellar/git/phyfleaux/" >> /home/stellar/.bashrc
 
 RUN chown -R stellar:stellar /home/stellar
 
 WORKDIR /home/stellar
 USER stellar
-WORKDIR /home/stellar/src/phyflow/backend
 
+
+WORKDIR /home/stellar/git/
