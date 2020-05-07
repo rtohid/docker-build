@@ -3,11 +3,6 @@
 # Distributed under the Boost Software License, Version 1.0. (See a copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
-# os: ubuntu 18.04
-# Builds tiramisu with Halide
-# compiler: clang-8
-# also builds ISL, LLVM, CLANG and PyBind11
-
 FROM ubuntu:18.04
 
 RUN apt update
@@ -16,7 +11,7 @@ RUN apt install -y sudo
 
 RUN apt install -y python3.8 python3.8-dev python3.8-distutils
 RUN apt install -y build-essential
-RUN apt install -y cmake automake autoconf libtool lld
+RUN apt install -y cmake automake autoconf libtool
 RUN apt install -y libpng-dev libjpeg-dev
 RUN apt install -y zlib1g-dev libz-dev
 RUN apt install -y git vim
@@ -42,7 +37,7 @@ RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive apt -y install cuda
 
 WORKDIR /home/stellar/git
-RUN git clone https://github.com/Tiramisu-Compiler/tiramisu.git
+RUN git clone --recursive https://github.com/Tiramisu-Compiler/tiramisu.git
 
 # ISL
 WORKDIR /home/stellar/git/tiramisu/3rdParty/isl/build
@@ -51,6 +46,7 @@ WORKDIR /home/stellar/git/tiramisu/3rdParty/isl/
 RUN ./configure --prefix=$PWD/build/ --with-int=imath
 RUN make -j
 RUN make install
+
 
 WORKDIR /tmp/
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -61,21 +57,25 @@ RUN adduser --disabled-password --gecos '' stellar
 RUN adduser stellar sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-WORKDIR /home/stellar/git/tiramisu
-RUN ./utils/scripts/install_submodules.sh `pwd`
-
 WORKDIR /home/stellar/git/tiramisu/build
-RUN CC=clang-8 CXX=clang++-8 cmake ..
+RUN cmake ..
 RUN make -j tiramisu
 
 WORKDIR /home/stellar/git/
 RUN git clone --single-branch https://github.com/pybind/pybind11.git
 
 WORKDIR /home/stellar/git/pybind11/build
-RUN CC=clang-8 CXX=clang++-8 cmake ..
+RUN cmake ..
 RUN make -j
 RUN make install
 RUN python3.8 -m pip install pybind11
+
+WORKDIR /home/stellar/git
+RUN git clone -b demo-merge --single-branch https://github.com/stellar-group/phyfleaux.git
+
+WORKDIR /home/stellar/git/phyfleaux/phyfleaux/backend
+RUN ln -s /home/stellar/git/tiramisu/build/libtiramisu.so .
+RUN make -j
 
 WORKDIR /tmp/
 RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
