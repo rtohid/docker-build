@@ -22,7 +22,7 @@ RUN apt install -y llvm-8 llvm-8-dev clang-8
 WORKDIR /tmp/
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN CC=clang-8 CXX=clang++-8 python3.8 get-pip.py
-RUN CC=clang-8 CXX=clang++-8 python3.8 -m pip install pytest numpy astpretty
+RUN CC=clang-8 CXX=clang++-8 python3.8 -m pip install pytest numpy astpretty pylint yapf
 RUN CC=clang-8 CXX=clang++-8 python3.8 -m pip install pybind11
 
 # ## MPI
@@ -46,26 +46,33 @@ RUN adduser --disabled-password --gecos '' stellar
 RUN adduser stellar sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# WORKDIR /home/stellar/git/tiramisu/build
-# RUN cmake -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 ..
-# RUN make -j tiramisu
+WORKDIR /home/stellar/git/tiramisu/
+RUN sed -i 's/llvm-config/llvm-config-8/g' CMakeLists.txt
+RUN sed -i 's/clang++/clang++-8/g' CMakeLists.txt
+
+WORKDIR /home/stellar/git/tiramisu/build
+RUN cmake -DUSE_HALIDE=OFF -DCMAKE_C_COMPILER=clang-8 -DCMAKE_CXX_COMPILER=clang++-8 ..
+RUN make -j tiramisu
 
 WORKDIR /home/stellar/git
 RUN git clone -b backend --single-branch https://github.com/ct-clmsn/phyflow.git
 
-# WORKDIR /home/stellar/git/phyflow/phyflow/backend
-# RUN ln -s /home/stellar/git/tiramisu/build/libtiramisu.so .
-# RUN CC=clang-8 CXX=clang++-8 make -j
+WORKDIR /home/stellar/git/phyflow/backend
+RUN ln -s /home/stellar/git/tiramisu/build/libtiramisu.so .
+RUN HOME=/home/stellar make CXX=clang++-8 ISL_ROOT_DIR=/home/stellar/git/tiramisu/3rdParty/isl/ ISL_LIB_DIR=/home/stellar/git/tiramisu/3rdParty/isl/build/lib
 
-WORKDIR /tmp/
-RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/git/phyflow/phyflow/backend" >> /home/stellar/.bashrc
-RUN echo "export PYTHONPATH=:/home/stellar/git/phyfleaux/" >> /home/stellar/.bashrc
+WORKDIR /home/stellar/git
+RUN git clone -b demo-merge --single-branch https://github.com/STEllAR-GROUP/phyfleaux.git
 
 RUN chown -R stellar:stellar /home/stellar
+
 
 WORKDIR /home/stellar
 USER stellar
 
+WORKDIR /tmp/
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/git/phyflow/backend" >> /home/stellar/.bashrc
+RUN echo "export PYTHONPATH=:/home/stellar/git/phyflow/backend" >> /home/stellar/.bashrc
 
-WORKDIR /home/stellar/git/
+WORKDIR /home/stellar/
