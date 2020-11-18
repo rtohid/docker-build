@@ -17,27 +17,38 @@ RUN dnf install -y python3.8 python-devel
 RUN ln -s /usr/lib64/openmpi/lib/libmpi_cxx.so /usr/lib64/openmpi/lib/libmpi_cxx.so.1
 RUN ln -s /usr/lib64/openmpi/lib/libmpi.so /usr/lib64/openmpi/lib/libmpi.so.12
 
+# get pip
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.8 get-pip.py
-RUN pip3.8 install -U flake8 yapf pytest pylint
+
+# install essentials
 RUN pip3.8 install -U --trusted-host pypi.org --trusted-host files.pythonhosted.org numpy 
+
+# install developer essentials.
+RUN pip3.8 install -U flake8 yapf pytest pylint
+
+# install ai essentials
 RUN pip3.8 install -U --trusted-host pypi.org --trusted-host files.pythonhosted.org tensorflow
 RUN pip3.8 install -U --trusted-host pypi.org --trusted-host files.pythonhosted.org keras
 
+# build all dependencies for hpx and phylanx.
 WORKDIR /home/stellar/src/
 RUN git clone https://github.com/rtohid/scripts.git
 
 WORKDIR /home/stellar/src/scripts/kubuntu/build/phylanx
 
-RUN chomod u+x ./*
+RUN chmod u+x ./*
 RUN ./blaze.sh -i release
 RUN ./blaze_tensor.sh -i release
-RUN ./pybind11.sh build release
+RUN ./pybind11.sh install release
 RUN ./hpx.sh -i release
 RUN ./phylanx.sh -i release
 
 RUN echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN useradd -m stellar
+RUN echo "export PYTHONPATH=$PYTHONPATH:/home/stellar/install/phylanx/Release/lib64" >> ~/.bashrc
+
 RUN chown -R stellar:stellar /home/stellar
+
 USER stellar
 WORKDIR /home/stellar
