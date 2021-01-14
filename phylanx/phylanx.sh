@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# Copyright (c) 2020 R. Tohid (@rtohid)
+#
+# Distributed under the Boost Software License, Version 1.0. (See a copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
 FILENAME=$0
 ARGS=$@
 
@@ -210,7 +215,7 @@ build()
 
     fi 
 
-    cd "$BUILD_DIR"
+    cd "$BUILD_DIR" (@rtohid)
     if [ ! -z "$BRANCH" ]; then
         git fetch $PHYLANX_REMOTE
         git checkout $BRANCH
@@ -225,6 +230,8 @@ build()
         -Dblaze_DIR=$INSTALL_ROOT/blaze/$BUILD_TYPE/share/blaze/cmake/          \
         -DBlazeTensor_DIR=$INSTALL_ROOT/blaze_tensor/$BUILD_TYPE/share/blaze/cmake/          \
         -DPHYLANX_WITH_BLAZE_TENSOR=ON                                          \
+        -DPHYLANX_WITH_EXAMPLES=OFF                                             \
+        -DPHYLANX_WITH_TESTS=OFF                                                \
         -Dpybind11_DIR=$INSTALL_ROOT/pybind11/$BUILD_TYPE/share/cmake/pybind11/ \
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE                                          \
         -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR                                     \
