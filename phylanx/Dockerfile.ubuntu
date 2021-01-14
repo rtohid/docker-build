@@ -93,9 +93,12 @@ USER stellar
 WORKDIR /tmp/
 RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
 
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/root/phylanx/build/python/build/lib.linux-x86_64-3.8/phylanx/python/build/lib.linux-x86_64-3.8/phylanx/" >> /home/stellar/.bashrc
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/root/phylanx/build/lib" >> /home/stellar/.bashrc
-RUN echo "export PYTHONPATH=\$PYTHONPATH::/home/stellar/git/phylanx/build/python/build/lib.linux-x86_64-3.8" >> /home/stellar/.bashrc
+# add an empty line
+RUN echo "" >> /home/stellar/.bashrc
+
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/git/phylanx/build/python/build/lib.linux-x86_64-3.8/phylanx/python/build/lib.linux-x86_64-3.8/phylanx/" >> /home/stellar/.bashrc
+RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/stellar/git/phylanx/build/lib" >> /home/stellar/.bashrc
+RUN echo "export PYTHONPATH=\$PYTHONPATH:/home/stellar/git/phylanx/build/python/build/lib.linux-x86_64-3.8" >> /home/stellar/.bashrc
 RUN sed -i 's/OSH_THEME="font"/OSH_THEME="mairan"/g' /home/stellar/.bashrc
 
 WORKDIR /home/stellar/
