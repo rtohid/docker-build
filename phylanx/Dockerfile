@@ -6,7 +6,7 @@
 FROM fedora
 
 ARG CPUS=4
-ARG BUILD_TYPE=Release
+ARG BUILD_TYPE=Debug
 
 RUN dnf install -y make cmake git bzip2 zlib-devel hwloc-devel 
 RUN dnf install -y gcc-c++ gcc
@@ -39,14 +39,15 @@ RUN git clone https://github.com/rtohid/scripts.git
 WORKDIR /home/stellar/src/scripts/kubuntu/build/phylanx
 
 RUN chmod u+x ./*
-RUN ./blaze.sh -i release
-RUN ./blaze_tensor.sh -i release
-RUN ./pybind11.sh -i release
-RUN ./hpx.sh -i release
-RUN ./phylanx.sh -i release
+RUN ./blaze.sh -i ${BUILD_TYPE}
+RUN ./blaze_tensor.sh -i ${BUILD_TYPE}
+RUN ./pybind11.sh -i ${BUILD_TYPE}
+RUN ./hpx.sh -i ${BUILD_TYPE}
+RUN ./phylanx.sh -i ${BUILD_TYPE}
 
 RUN echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN useradd -m stellar
+RUN echo "export PYTHONPATH=$PYTHONPATH:/home/stellar/install/phylanx/Release/lib64" >> /home/stellar/.bashrc
 RUN chown -R stellar:stellar /home/stellar
 USER stellar
 WORKDIR /home/stellar
