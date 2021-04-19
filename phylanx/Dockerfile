@@ -39,10 +39,10 @@ RUN git clone https://github.com/rtohid/scripts.git
 WORKDIR /home/stellar/src/scripts/kubuntu/build/phylanx
 
 RUN chmod u+x ./*
+RUN ./hpx.sh -i ${BUILD_TYPE}
 RUN ./blaze.sh -i ${BUILD_TYPE}
 RUN ./blaze_tensor.sh -i ${BUILD_TYPE}
 RUN ./pybind11.sh -i ${BUILD_TYPE}
-RUN ./hpx.sh -i ${BUILD_TYPE}
 RUN ./phylanx.sh -i ${BUILD_TYPE}
 
 RUN echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
