@@ -1,0 +1,78 @@
+# Copyright (c) 2021 R. Tohid (@rtohid)
+#
+# Distributed under the Boost Software License, Version 1.0. (See a copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+# os: ubuntu 18.04
+# Builds tiramisu with Halide
+# compiler: clang-8
+# also builds ISL, LLVM, CLANG and PyBind11
+
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG CORES=8
+
+RUN apt update
+RUN apt install -y sudo
+
+RUN apt install -y build-essential
+RUN apt install -y automake autoconf libtool lld
+RUN apt install -y python3.8 python3.8-dev python3.8-distutils
+RUN apt install -y libpng-dev libjpeg-dev libssl-dev
+RUN apt install -y zlib1g-dev libz-dev
+RUN apt install -y git vim
+RUN apt install -y wget curl
+RUN apt install -y bash-completion
+RUN apt install -y libhwloc-dev
+
+
+# install cmake 3.20.1 (HPX requires >3.17)
+RUN sudo apt remove --purge cmake
+WORKDIR /tmp
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.1/cmake-3.20.1.tar.gz
+RUN tar -zxvf cmake-3.20.1.tar.gz
+WORKDIR /tmp/cmake-3.20.1
+RUN ./bootstrap
+RUN make -j install
+
+WORKDIR /home/stellar/git
+RUN git clone https://github.com/Tiramisu-Compiler/tiramisu.git
+
+WORKDIR /home/stellar/git/tiramisu
+RUN sed -i 's/CORES=1/CORES=8/g' `pwd`/utils/scripts/install_submodules.sh
+RUN `pwd`/utils/scripts/install_submodules.sh `pwd`
+
+WORKDIR /home/stellar/git/tiramisu/build
+RUN cmake ..
+RUN make -j ${CORES} tiramisu
+
+WORKDIR /tmp
+RUN wget https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.gz
+RUN tar zxf boost_1_76_0.tar.gz
+WORKDIR /tmp/boost_1_76_0
+RUN ./bootstrap.sh 
+RUN ./b2 -j 8
+RUN ./b2 install -j 8
+
+WORKDIR /tmp
+RUN git clone https://github.com/rtohid/scripts.git
+WORKDIR /tmp/scripts
+RUN chmod -R u+x  .
+WORKDIR /tmp/scripts/kubuntu/build/phylanx
+RUN ./hpx.sh -i debug --src-path /home/stellar/git
+
+RUN adduser --disabled-password --gecos '' stellar
+RUN adduser stellar sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+RUN chown -R stellar:stellar /home/stellar
+
+WORKDIR /home/stellar
+USER stellar
+
+WORKDIR /tmp/
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+
+WORKDIR /home/stellar/git/
