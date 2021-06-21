@@ -1,0 +1,42 @@
+# Copyright (c) 2020 R. Tohid (@rtohid)
+#
+# Distributed under the Boost Software License, Version 1.0. (See a copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update
+RUN apt install -y sudo
+
+# add user
+RUN adduser --disabled-password --gecos '' stellar
+RUN adduser stellar sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+RUN apt install -y llvm-11-dev cmake zlib1g-dev libz-dev git vim wget \
+                   clang-tools-11 lld-11 llvm-dev libclang-11-dev liblld-11-dev \
+                   libpng-dev libjpeg-dev libgl-dev \
+                   python3-dev python3-numpy python3-scipy python3-imageio \
+                   libopenblas-dev libeigen3-dev libatlas-base-dev \
+                   doxygen ninja-build
+
+
+WORKDIR /home/stellar
+RUN git clone https://github.com/halide/Halide.git
+
+WORKDIR /home/stellar/Halide
+RUN cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR=/usr/lib/llvm-11/lib/cmake/llvm/ -DHalide_SHARED_LLVM=YES -S . -B build
+RUN cmake --build ./build --parallel
+RUN cmake --install ./build --prefix /path/to/Halide-install
+
+# OS Packages
+WORKDIR /home/stellar
+USER stellar
+
+# oh-my-bash
+WORKDIR /tmp/
+RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
+
+WORKDIR /home/stellar
