@@ -35,6 +35,8 @@ RUN cmake --install ./build --prefix /path/to/Halide-install
 WORKDIR /home/stellar
 USER stellar
 
+RUN chown -R stellar:stellar /home/stellar
+
 # oh-my-bash
 WORKDIR /tmp/
 RUN sh -c "$(wget https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh -O -)"
