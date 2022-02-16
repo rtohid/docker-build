@@ -1,0 +1,28 @@
+# Copyright (c) 2020 R. Tohid (@rtohid)
+#
+# Distributed under the Boost Software License, Version 1.0. (See a copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+FROM fedora
+
+RUN dnf -y update
+
+RUN dnf install -y cmake libtool gcc-c++ gcc-fortran python3-devel \
+                   xz xz-devel bzip2 bzip2-devel zlib-devel tar findutils \
+                   git wget curl patch
+
+WORKDIR /opt
+RUN git clone https://github.com/spack/spack.git
+
+RUN source /opt/spack/share/spack/setup-env.sh && \
+    spack env create vascular && \
+    spack env activate vascular && \
+    spack add mpich hdf5^mpich parmetis^mpich metis googletest clhep \
+    intel-mkl hypre^mpich && \
+    spack concretize && spack install
+
+RUN git clone https://github.com/shibatch/sleef.git
+
+RUN cmake -DBUILD_TESTS=OFF -S /opt/sleef -B /opt/sleef/cmake-build/ && \
+    cmake --build /opt/sleef/cmake-build/ && \
+    cmake --install /opt/sleef/cmake-build --prefix /opt/sleef/cmake-install
